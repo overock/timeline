@@ -8,7 +8,19 @@ class SVG {
       case _ instanceof SVG:
         return _;
       case _ instanceof SVGElement:
-        // factory method call
+        const c = {
+          svg: SVGRoot,
+          g: SVGGroup,
+          rect: SVGRect,
+          circle: SVGCircle,
+          line: SVGLine,
+          path: SVGPath,
+          text: SVGText,
+          image: SVGImage
+        },
+        caller = _[tagName];
+
+        if(caller) return new caller(_);
         break;
       case typeof _ == 'string':
         let el;
