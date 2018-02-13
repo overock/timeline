@@ -1,48 +1,86 @@
+const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
+const TAG_REGEX = /^<.+>$/;
+const SVG_WRAPPER = document.createElementNS(SVG_NAMESPACE, 'svg');
+const SVG_CALLER = {
+  svg: SVGRoot,
+  g: SVGGroup,
+  rect: SVGRect,
+  circle: SVGCircle,
+  line: SVGLine,
+  path: SVGPath,
+  text: SVGText,
+  image: SVGImage
+};
+const SVG_TAGS = Object.keys(SVG_CALLER);
+
 class SVG {
   constructor(_) {
+    let match;
     switch(true) {
-      case _ instanceof Array:
-      case _ instanceof HTMLCollection:
-      break;
-
       case _ instanceof SVG:
         return _;
-      case _ instanceof SVGElement:
-        const c = {
-          svg: SVGRoot,
-          g: SVGGroup,
-          rect: SVGRect,
-          circle: SVGCircle,
-          line: SVGLine,
-          path: SVGPath,
-          text: SVGText,
-          image: SVGImage
-        },
-        caller = _[tagName];
 
-        if(caller) return new caller(_);
+      case _ instanceof Array:
+      case _ instanceof HTMLCollection:
+      case _ instanceof NodeList:
+        this.ref = [];
+
+        [].from(_).forEach(v => {
+          const 
+          caller = c[ _.tagName ];
+  
+          if(caller) this.ref.push(new caller(_));
+          v instanceof SVGElement && this.ref.push(v);
+        });
         break;
-      case typeof _ == 'string':
-        let el;
-        if(regex = /^<.+>$/.exec(_.trim())) {
-          const wrapper = new SVGRoot();
-          wrapper.html(_);
-          const children = wrapper.children();
-          if(child.length==1) {
-            el = wrapper.firstElementChild();
-          } else {
-            el = children;
-          }
-        } else {
-          el = document.createElementNS(this.ns, _);
-        }
-        return new SVG(el);
+
+      // 위임
+      case _ instanceof SVGElement:
+        return new SVG([ _ ]);
+      
+      case !!(match = TAG_REGEX.exec(_.trim())):
+        SVG_WRAPPER.innerHTML = _;
+        return new SVGn(SVG_WRAPPER.children());
+      case SVG_TAGS.idexOf(_) != -1:
+        
       default:
-        return new NullSVG();
+        return new SVG(document.querySelectorAll(_));
+    }
+
+  }
+
+  radius(r) {
+    return this.ref.map(v => v.radius && v.radius(r));
+  }
+
+  path(d) {
+
+  }
+}
+
+
+class SVGCommon extends SVG {
+  constructor(el) {
+    this.el = el;
+  }
+
+  attr(k, v) {
+    switch(arguments.length) {
+      case 1:
+        return this.el.getAttribute(k);
+      case 2:
+        return this.el.setAttribute(k, v);
     }
   }
 
-  static get ns() { return 'http://www.w3.org/2000/svg'; }
+  style(k, v) {
+    switch(arguments.length) {
+      case 1:
+        return this.el.style[k];
+      case 2:
+        return this.el.style[k] = v;
+    }
+  }
 
   get id() { return this.attr('id'); }
   set id(s) { this.attr('id', s); }
@@ -50,47 +88,30 @@ class SVG {
   //get class() { return this.element.classList.join(' '); }
   //set class(s) { }
 
-  get html() { return this.element.innerHTML; }
-  set html(m) { this.element.innerHTML = m; }
+  get html() { return this.el.innerHTML; }
+  set html(m) { this.el.innerHTML = m; }
 
-  attr(k, v) {
-    switch(arguments.length) {
-      case 1:
-        return this.element.getAttribute(k);
-      case 2:
-        return this.element.setAttribute(k, v);
-    }
-  }
-
-  style(k, v) {
-    switch(arguments.length) {
-      case 1:
-        return this.element.style[k];
-      case 2:
-        return this.element.style[k] = v;
-    }
-  }
+  
 
   appendTo(e) {
-    e && e.appendChild && e.appendChild(this.element);
+    e && e.appendChild && e.appendChild(this.el);
   }
 
   append(e) {
-    e && this.element.appendChild(e);
+    e && this.el.appendChild(e);
   }
 
   remove() {
-    this.element.parentElement && this.element.parentElement.removeChild(this.element);
+    this.el.parentElement && this.el.parentElement.removeChild(this.el);
   }
 }
 
-class NullSVG extends SVG {}
-class SVGRoot extends SVG {}
-class SVGGroup extends SVG {}
-class SVGCollection extends SVG {}
-class SVGRect extends SVG {}
-class SVGCircle extends SVG {}
-class SVGLine extends SVG {}
-class SVGPath extends SVG {}
-class SVGText extends SVG {}
-class SVGImage extends SVG {}
+class SVGRoot extends SVGCommon {}
+class SVGGroup extends SVGCommon {}
+
+class SVGRect extends SVGCommon {}
+class SVGCircle extends SVGCommon {}
+class SVGLine extends SVGCommon {}
+class SVGPath extends SVGCommon {}
+class SVGText extends SVGCommon {}
+class SVGImage extends SVGCommon {}
