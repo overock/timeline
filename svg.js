@@ -1,65 +1,61 @@
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
 const TAG_REGEX = /^<.+>$/;
 const SVG_WRAPPER = document.createElementNS(SVG_NAMESPACE, 'svg');
-const SVG_CALLER = {
-  svg: SVGRoot,
-  g: SVGGroup,
-  rect: SVGRect,
-  circle: SVGCircle,
-  line: SVGLine,
-  path: SVGPath,
-  text: SVGText,
-  image: SVGImage
-};
-const SVG_TAGS = Object.keys(SVG_CALLER);
 
 class SVG {
   constructor(_) {
-    let match;
-    switch(true) {
-      case _ instanceof SVG:
-        return _;
+    const SVG_CALLER = {
+      svg: SVGRoot,
+      g: SVGGroup,
+      rect: SVGRect,
+      circle: SVGCircle,
+      line: SVGLine,
+      path: SVGPath,
+      text: SVGText,
+      image: SVGImage
+    }, SVG_TAGS = Object.keys(SVG_CALLER);
+    
+    if(_ instanceof SVG) return _;
 
-      case _ instanceof Array:
-      case _ instanceof HTMLCollection:
-      case _ instanceof NodeList:
-        this.ref = [];
+    if(_ instanceof SVGElement) _ = [ _ ];
 
-        [].from(_).forEach(v => {
-          const 
-          caller = c[ _.tagName ];
-  
-          if(caller) this.ref.push(new caller(_));
-          v instanceof SVGElement && this.ref.push(v);
-        });
-        break;
-
-      // 위임
-      case _ instanceof SVGElement:
-        return new SVG([ _ ]);
-      
-      case !!(match = TAG_REGEX.exec(_.trim())):
+    if(typeof _ == 'string') {
+      if(TAG_REGEX.exec(_.trim())) {  // markup form
         SVG_WRAPPER.innerHTML = _;
-        return new SVGn(SVG_WRAPPER.children());
-      case SVG_TAGS.idexOf(_) != -1:
-        
-      default:
-        return new SVG(document.querySelectorAll(_));
+        _ = SVG_WRAPPER.children();
+      } else if(SVG_TAGS.indexOf(_) != -1) {  // tag form
+        _ = [ document.createElementNS(SVG_NAMESPACE, _) ];
+      } else {
+        _ = document.querySelectorAll(_);
+      }
     }
 
+    this.el = [];
+
+    Array.from(_).forEach(v => {
+      const caller = SVG_CALLER[v.tagName];
+
+      caller && this.el.push(new caller(v));
+    });
   }
 
-  radius(r) {
-    return this.ref.map(v => v.radius && v.radius(r));
+  _get(f) {
+    const found = this.el.find(v => v[_f]);
+    return found && found[_f];
   }
+  _set(f, ...v) { this.el.map(v => v[_f] && (v[f] = v)); }
 
-  path(d) {
+  get width() { return this.iterate('width'); }
+  set width(l) { this._set('width', l); }
+  get height() { return this.iterate('height'); }
+  set height(l) { this._set('height', l); }
 
-  }
+  set radius(r) { this._set('radius', r); }
+  set path(d) { this._set('path', d); }
 }
 
 
-class SVGCommon extends SVG {
+class SVGCommon {
   constructor(el) {
     this.el = el;
   }
