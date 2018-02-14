@@ -39,11 +39,24 @@ class SVG {
     });
   }
 
-  _get(f) {
+  append(c) {
+    const parent = this.el.find(v => v.appendable);
+    return parent && parent.append(new SVG(c));
+  }
+
+  appendTo(p) {
+    const parent = new SVG(p);
+    return parent.appendable && parent.append(this);
+  }
+
+  _get(f) {    
     const found = this.el.find(v => v[f]);
     return found && found[f]();
   }
-  _set(f, ...a) { this.el.map(v => v[f] && v[f](a)); }
+  _set(f, ...a) { this.el.map(v => v[f] && v[f](...a)); }
+
+  css(k, v) { return this._set('css', k, v); }
+  attr(k, v) { return this._set('attr', k, v); }
 
   get left() { return this._get('left'); }
   set left(l) { this._set('left', l); }
@@ -72,7 +85,7 @@ class SVGCommon {
     return typeof v == 'undefined'? this.el.getAttribute(k) : this.el.setAttribute(k, v);
   }
 
-  style(k, v) {
+  css(k, v) {
     return typeof v == 'unefined'? this.el.style[k] : (this.el.style[k] = v);
   }
 
