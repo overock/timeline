@@ -4,6 +4,8 @@ const SVG_WRAPPER = document.createElementNS(SVG_NAMESPACE, 'svg');
 
 class SVG {
   constructor(_) {
+    if(_ instanceof SVG) return _;
+
     const SVG_CALLER = {
       svg: SVGRoot,
       g: SVGGroup,
@@ -14,12 +16,10 @@ class SVG {
       text: SVGText,
       image: SVGImage
     }, SVG_TAGS = Object.keys(SVG_CALLER);
-    
-    if(_ instanceof SVG) return _;
 
-    if(_ instanceof SVGElement) _ = [ _ ];
-
-    if(typeof _ == 'string') {
+    if(_ instanceof SVGElement) {
+      _ = [ _ ];
+    } else if(typeof _ == 'string') {
       if(TAG_REGEX.exec(_.trim())) {  // markup form
         SVG_WRAPPER.innerHTML = _;
         _ = SVG_WRAPPER.children();
@@ -40,18 +40,26 @@ class SVG {
   }
 
   _get(f) {
-    const found = this.el.find(v => v[_f]);
-    return found && found[_f];
+    const found = this.el.find(v => v[f]);
+    return found && found[f]();
   }
-  _set(f, ...v) { this.el.map(v => v[_f] && (v[f] = v)); }
+  _set(f, ...a) { this.el.map(v => v[f] && v[f](a)); }
 
-  get width() { return this.iterate('width'); }
+  get left() { return this._get('left'); }
+  set left(l) { this._set('left', l); }
+  get top() { return this._get('top'); }
+  set top(l) { this._set('top', l); }
+  get width() { return this._get('width'); }
   set width(l) { this._set('width', l); }
-  get height() { return this.iterate('height'); }
+  get height() { return this._get('height'); }
   set height(l) { this._set('height', l); }
 
+  get radius() { return this._get('radius'); }
   set radius(r) { this._set('radius', r); }
+  get path() { return this._get('path'); }
   set path(d) { this._set('path', d); }
+
+  item(n) { return new SVG(this.el[n]); }
 }
 
 
@@ -61,21 +69,11 @@ class SVGCommon {
   }
 
   attr(k, v) {
-    switch(arguments.length) {
-      case 1:
-        return this.el.getAttribute(k);
-      case 2:
-        return this.el.setAttribute(k, v);
-    }
+    return typeof v == 'undefined'? this.el.getAttribute(k) : this.el.setAttribute(k, v);
   }
 
   style(k, v) {
-    switch(arguments.length) {
-      case 1:
-        return this.el.style[k];
-      case 2:
-        return this.el.style[k] = v;
-    }
+    return typeof v == 'unefined'? this.el.style[k] : (this.el.style[k] = v);
   }
 
   get id() { return this.attr('id'); }
@@ -102,7 +100,9 @@ class SVGCommon {
   }
 }
 
-class SVGRoot extends SVGCommon {}
+class SVGRoot extends SVGCommon {
+  width(l) { return this.attr('width', l); }
+}
 class SVGGroup extends SVGCommon {}
 
 class SVGRect extends SVGCommon {}
