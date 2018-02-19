@@ -35,8 +35,6 @@ class SVG {
       }
     }
 
-    console.log(_);
-
     this.collection = [];
 
     Array.from(_).forEach(v => {
@@ -58,8 +56,6 @@ class SVG {
     if(p instanceof SVG) p = p.collection[0].el;
     this.collection.forEach(v => p.appendChild(v.el));
     return this;
-  //   const parent = new SVG(p);
-  //   return parent.appendable && parent.append(this);
   }
 
   remove() { return this.collection.map(v => v.remove()); }
@@ -104,9 +100,7 @@ class SVG {
   width(...n) { return this.iter('width', ...n); }
   height(...n) { return this.iter('height', ...n); }
   radius(...n) { return this.iter('radius', ...n); }
-
 }
-
 
 class SVGCommon {
   constructor(el) {
