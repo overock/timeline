@@ -30,17 +30,17 @@ class SVG {
       }
     }
 
-    this.el = [];
+    this.collection = [];
 
     Array.from(_).forEach(v => {
       const caller = SVG_CALLER[v.tagName];
 
-      caller && this.el.push(new caller(v));
+      caller && this.collection.push(new caller(v));
     });
   }
 
   append(c) {
-    const parent = this.el.find(v => v.appendable);
+    const parent = this.collection.find(v => v.appendable);
     return parent && parent.append(new SVG(c));
   }
 
@@ -49,30 +49,38 @@ class SVG {
     return parent.appendable && parent.append(this);
   }
 
-  _get(f) {    
-    const found = this.el.find(v => v[f]);
-    return found && found[f]();
+  remove() { return this.collection.map(v => v.remove()); }
+
+  iter(f, ...a) {
+    if(a.length) {
+      return this.collection.map(v => v[f] && v[f](...a)), this;
+    } else {
+      const found = this.collection.find(v => v[f]);
+      return found && found[f]();
+    }
   }
-  _set(f, ...a) { this.el.map(v => v[f] && v[f](...a)); }
 
-  css(k, v) { return this._set('css', k, v); }
-  attr(k, v) { return this._set('attr', k, v); }
+  item(n) { return new SVG(this.collection[n]); }
 
-  get left() { return this._get('left'); }
-  set left(l) { this._set('left', l); }
-  get top() { return this._get('top'); }
-  set top(l) { this._set('top', l); }
-  get width() { return this._get('width'); }
-  set width(l) { this._set('width', l); }
-  get height() { return this._get('height'); }
-  set height(l) { this._set('height', l); }
+  css(k, ...v) { return this.iter('css', ...v); }
+  attr(k, ...v) { return this.iter('attr', ...v); }
 
-  get radius() { return this._get('radius'); }
-  set radius(r) { this._set('radius', r); }
-  get path() { return this._get('path'); }
-  set path(d) { this._set('path', d); }
+  id(...s) { return this.iter('id', ...s); }
+  html(...s) { return this.iter('html', ...s); }
 
-  item(n) { return new SVG(this.el[n]); }
+  strokecolor(...s) { return this.iter('strokecolor', ...s); }
+  strokeweight(...n) { return this.iter('strokeweight', ...n); }
+  dasharray(...n) { return this.iter('dasharray', n.join(' ') || undefined); }
+  linejoin(...s) { return this.iter('linejoin', ...s); }
+  linecap(...s) { return this.iter('linecap', ...s); }
+  fill(...s) { return this.iter('fill', ...s); }
+  
+  left(...n) { return this.iter('left', ...n); }
+  top(...n) { return this.iter('top', ...n); }
+  width(...n) { return this.iter('width', ...n); }
+  height(...n) { return this.iter('height', ...n); }
+  radius(...n) { return this.iter('radius', ...n); }
+
 }
 
 
@@ -82,45 +90,79 @@ class SVGCommon {
   }
 
   attr(k, v) {
-    return typeof v == 'undefined'? this.el.getAttribute(k) : this.el.setAttribute(k, v);
+    return typeof v == 'undefined'? this.el.getAttribute(k) : (this.el.setAttribute(k, v), this);
   }
 
   css(k, v) {
-    return typeof v == 'unefined'? this.el.style[k] : (this.el.style[k] = v);
+    return typeof v == 'unefined'? this.el.style[k] : ((this.el.style[k] = v), this);
   }
 
-  get id() { return this.attr('id'); }
-  set id(s) { this.attr('id', s); }
+  id(s) { return this.attr('id'); }
+  html(s) { return typeof s == 'undefined'? this.el.innerHTML : ((this.el.innerHTML = s), this); }
 
-  //get class() { return this.element.classList.join(' '); }
-  //set class(s) { }
-
-  get html() { return this.el.innerHTML; }
-  set html(m) { this.el.innerHTML = m; }
-
-  
+  strokecolor(s) { return this.css('stroke', s); }
+  strokeweight(n) { return this.css('stroke-width', n); }
+  dasharray(s) { return this.css('stroke-dasharray', s); }
+  linejoin(s) { return this.attr('stroke-linejoin', s); }
+  linecap(s) { return this.attr('stroke-linecap', s); }
+  fill(s) { return this.css('fill', s); }
 
   appendTo(e) {
+    if(e instanceof SVG) e = e.el;
     e && e.appendChild && e.appendChild(this.el);
+    return this;
   }
 
   append(e) {
+    if(e instanceof SVG) e = e.el;
     e && this.el.appendChild(e);
+    return this;
   }
 
   remove() {
     this.el.parentElement && this.el.parentElement.removeChild(this.el);
+    return this;
   }
 }
 
 class SVGRoot extends SVGCommon {
-  width(l) { return this.attr('width', l); }
+  constructor() {
+    this.appendable = true;
+  }
+  width(n) { return this.css('width', n); }
+  height(n) { return this.css('height', n); }
 }
-class SVGGroup extends SVGCommon {}
+class SVGGroup extends SVGCommon {
+  constructor() {
+    super();
+    this.appendable = true;
+  //   this.stroke = null;
+  //   this.strokeWidth = null;
+  //   this.lineCap = null;
+  //   this.lineJoin = null;
+  //   this.fill = null;
+  }
+}
 
-class SVGRect extends SVGCommon {}
-class SVGCircle extends SVGCommon {}
-class SVGLine extends SVGCommon {}
+class SVGRect extends SVGCommon {
+  width(n) { return this.attr('width', n); }
+  height(n) { return this.attr('height', n); }
+  left(n) { return this.attr('x', n); }
+  top(n) { return this.attr('y', n); }
+  radius(n) { return this.attr('rx', n), this.attr('ry', n); }
+}
+class SVGCircle extends SVGCommon {
+  left(n) { return this.attr('cx', n); }
+  top(n) { return this.attr('cy', n); }
+  radius(n) { return this.attr('r', n); }
+}
+
+class SVGLine extends SVGCommon {
+  left(n) { return this.attr('x1', n); }
+  top(n) { return this.attr('y1', n); }
+  width(n) { return this.attr('x2', n); }
+  height(n) { return this.attr('y2', n); }
+}
 class SVGPath extends SVGCommon {}
 class SVGText extends SVGCommon {}
 class SVGImage extends SVGCommon {}
