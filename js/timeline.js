@@ -1,3 +1,5 @@
+import { SVG } from './svg.js';
+
 class Timeline {
   constructor() {
     this.renderer = new SVG().width('100%').height('100%');
@@ -28,7 +30,8 @@ class Timeline {
   }
 
   append(el) {
-    console.log(el, this.renderer);
     el.appendChild(this.renderer.elements[0]);
   }
 }
+
+export { Timeline };

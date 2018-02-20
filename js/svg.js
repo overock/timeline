@@ -1,38 +1,28 @@
-const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
-const TAG_REGEX = /^<.+>$/;
-const SVG_WRAPPER = document.createElementNS(SVG_NAMESPACE, 'svg');
-
 class SVG {
   constructor(_) {
     if(_ instanceof SVG) return _;
 
     const SVG_CALLER = {
-      svg: SVGRoot,
-      g: SVGGroup,
-      rect: SVGRect,
-      circle: SVGCircle,
-      ellipse: SVGEllipse,
-      line: SVGLine,
-      path: SVGPath,
-      text: SVGText,
-      image: SVGImage
-    }, SVG_TAGS = Object.keys(SVG_CALLER);
+            svg: SVGRoot,
+            g: SVGGroup,
+            rect: SVGRect,
+            circle: SVGCircle,
+            ellipse: SVGEllipse,
+            line: SVGLine,
+            path: SVGPath,
+            text: SVGText,
+            image: SVGImage
+          },
+          SVG_TAGS = Object.keys(SVG_CALLER);
 
     _ || (_ = 'svg');
 
     if(_ instanceof SVGElement || _ instanceof SVGCommon) {
       _ = [ _ ];
-    } /*else if(_ instanceof SVGCommon) { // 비효율적이다 -_-
-      _ = [ _.el ];
-    } */else if(typeof _ == 'string') {
-      if(TAG_REGEX.exec(_.trim())) {  // markup form
-        SVG_WRAPPER.innerHTML = _;
-        _ = SVG_WRAPPER.children();
-      } else if(SVG_TAGS.indexOf(_) != -1) {  // tag form
-        _ = [ document.createElementNS(SVG_NAMESPACE, _) ];
-      } else {
-        _ = document.querySelectorAll(_);
-      }
+    } else if(typeof _ == 'string') {
+      _ = /^<.+>$/.exec(_.trim())? SVG_WRAPPER.html(_).element[0].children()
+                                 : SVG_TAGS.indexOf(_) != -1? [ document.createElementNS('http://www.w3.org/2000/svg', _) ]
+                                                            : document.querySelectorAll(_);
     }
 
     this.collection = [];
@@ -70,15 +60,13 @@ class SVG {
   }
 
   item(n) { return new SVG(this.collection[n]); }
+  element(n) { return this.collection[n].el; }
   get elements() { return this.collection.map(v => v.el); }
 
   css(k, ...v) { return this.iter('css', ...v); }
   attr(k, ...v) { return this.iter('attr', ...v); }
 
-  classList() {
-    // 교집합만 내보내자.
-    //return this.collection.reduce()
-  }
+  classList() { return this.collection.reduce((p, v) => v.classList.filter(w => p.indexOf(w) != -1), this.collection[0].classList); }
   addClass(s) { return this.collection.forEach(v => v.el.addClass(s)), this; }
   removeClass(s) { return this.collection.forEach(v => v.removeClass(s)), this; }
 
@@ -112,10 +100,10 @@ class SVGCommon {
   }
 
   css(k, v) {
-    return typeof v == 'unefined'? this.el.style[k] : ((this.el.style[k] = v), this);
+    return typeof v == 'undefined'? this.el.style[k] : ((this.el.style[k] = v), this);
   }
 
-  id(s) { return this.attr('id'); }
+  id(s) { return this.attr('id', s); }
   html(s) { return typeof s == 'undefined'? this.el.innerHTML : ((this.el.innerHTML = s), this); }
 
   stroke(s) { return this.css('stroke', s); }
@@ -188,7 +176,7 @@ class SVGLine extends SVGCommon {
     return typeof n == 'undefined'? (this.attr('x2')|0) - x : this.attr('x2', n + x);
   }
   height(n) {
-    const y = this.attr('y1')|0
+    const y = this.attr('y1')|0;
     return typeof n == 'undefined'? (this.attr('y2')|0) - y : this.attr('y2', n + y);
   }
 }
@@ -196,3 +184,7 @@ class SVGLine extends SVGCommon {
 class SVGPath extends SVGCommon {}
 class SVGText extends SVGCommon {}
 class SVGImage extends SVGCommon {}
+
+const SVG_WRAPPER = new SVG();//document.createElementNS(SVG_NAMESPACE, 'svg');
+
+export { SVG };

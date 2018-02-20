@@ -1,9 +1,10 @@
 <html>
   <body>
     <div id="chartArea" style="width:800px; height:100px; border:1px solid black;"></div>
-    <script src="./js/svg.js"></script>
-    <script src="./js/timeline.js"></script>
-    <script>
+    <!--script src="./js/svg.js"></script-->
+    <!--script src="./js/timeline.js"></script-->
+    <script type="module">
+      import { Timeline } from './js/timeline.js';
       let chart = new Timeline();
       chart.data = [{
           "series": "test",
@@ -67,6 +68,8 @@
         }
       ]
       chart.append(document.getElementById('chartArea'));
+
+      console.log(chart);
     </script>
   </body>
 </html>
